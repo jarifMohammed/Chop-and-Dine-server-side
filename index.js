@@ -7,7 +7,7 @@ app.use(cors())
 app.use(express.json())
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.trszs.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -40,6 +40,7 @@ app.get('/review' , async(req,res) => {
 // cart collection
 app.get('/carts' , async (req,res) => {
   const email = req.query.email
+  
   const query = {email : email}
   const result = await cartCollection.find(query).toArray()
   res.send(result)
@@ -49,6 +50,24 @@ app.post('/carts' , async(req,res) => {
   const result = await cartCollection.insertOne(cartItem)
   res.send(result)
 })
+
+app.delete('/carts/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    
+    // Log the req object and params
+    // console.log('Request Object:', req);
+    // console.log('Request Params:', req.params);
+
+    const query = { _id: new ObjectId(id) };
+    const result = await cartCollection.deleteOne(query);
+
+    res.send(result);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send({ message: 'An error occurred' });
+  }
+});
 
 
 
