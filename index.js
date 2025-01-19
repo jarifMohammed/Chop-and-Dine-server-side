@@ -3,6 +3,7 @@ const app =express()
 const cors =require('cors')
 const jwt = require('jsonwebtoken')
 const port = process.env.PORT || 5000
+
 require('dotenv').config()
 app.use(cors())
 app.use(express.json())
@@ -68,6 +69,21 @@ async function run() {
      
       const result = await userCollection.find().toArray()
       res.send(result)
+    })
+    // cheking is admin
+    app.get('/users/admin/:email', verifyToken, async (req,res)=> {
+      const email = req.params.email
+      if(email !== req.decoded.email){
+        return res.status(403).send({message: 'unauthorized access'})
+      }
+      const query = { email : email}
+      const user = await userCollection.findOne(query)
+      let admin = false
+      if(user){
+        admin = user?.role === 'admin'
+
+      }
+      res.send({ admin})
     })
     app.post('/users' , async (req,res) => {
       const user =  req.body
