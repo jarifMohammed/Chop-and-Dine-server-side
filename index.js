@@ -1,6 +1,7 @@
 const express = require('express')
 const app =express()
 const cors =require('cors')
+const jwt = require('jsonwebtoken')
 const port = process.env.PORT || 5000
 require('dotenv').config()
 app.use(cors())
@@ -28,8 +29,46 @@ async function run() {
     const menuCollection = client.db('dineDB').collection('menu')
     const reviewCollection = client.db('dineDB').collection('reviews')
     const cartCollection = client.db('dineDB').collection('cart')
-    
+    // middlewares
+    const verifyToken = (req, res, next) => {
+      const authHeader = req.headers.authorization; // Note: 'authorization' should be all lowercase.
+      console.log('Authorization Header:', authHeader); // Debugging log
+  
+      if (!authHeader) {
+          return res.status(401).send({ message: 'Unauthorized: No Authorization header provided' });
+      }
+  
+      const token = authHeader.split(' ')[1]; // Extracting the token part
+      if (!token) {
+          return res.status(401).send({ message: 'Unauthorized: No token provided' });
+      }
+  
+      jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
+          if (err) {
+              console.error('JWT Verification Error:', err); // Log the error for debugging
+              return res.status(401).send({ message: 'Unauthorized: Invalid token' });
+          }
+          req.decoded = decoded;
+          next();
+      });
+  };
+   
+
+
+    //jwt related api
+    app.post('/jwt',async (req,res) => {
+      const user = req.body
+      const token = jwt.sign(user,process.env.ACCESS_TOKEN,{
+        expiresIn:'2h'
+      })
+      res.send({token})
+    })
     // user related api
+    app.get('/users',verifyToken,async (req,res) => {
+     
+      const result = await userCollection.find().toArray()
+      res.send(result)
+    })
     app.post('/users' , async (req,res) => {
       const user =  req.body
       // chekcxing if the user already exist
@@ -42,6 +81,25 @@ async function run() {
       const result = await userCollection.insertOne(user)
       res.send(result)
     })
+    app.delete('/users/:id' , async (req,res) => {
+      const id = req.params.id
+      const query = {_id : new ObjectId(id)}
+      const result = await userCollection.deleteOne(query)
+      res.send(result)
+    })
+    app.patch('/users/admin/:id' , async(req,res) => {
+      const id = req.params.id
+      const filter = { _id : new ObjectId(id)}
+      const updatedRole ={
+        $set:{
+          role: 'admin'
+        }
+      }
+      const result = await userCollection.updateOne(filter , updatedRole)
+      res.send(result)
+    })
+
+
 
 
     
