@@ -23,10 +23,20 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+    const userCollection = client.db('dineDB').collection('users')
 
     const menuCollection = client.db('dineDB').collection('menu')
     const reviewCollection = client.db('dineDB').collection('reviews')
     const cartCollection = client.db('dineDB').collection('cart')
+    
+    // user related api
+    app.post('/users' , async (req,res) => {
+      const user =  req.body
+      const result = await userCollection.insertOne(user)
+      res.send(result)
+    })
+
+
     
 app.get('/menu' , async(req,res) => {
     const result = await menuCollection.find().toArray()
