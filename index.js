@@ -112,7 +112,7 @@ async function run() {
     });
 
     // API to delete a user
-    app.delete("/users/:id", verifyToken, async (req, res) => {
+    app.delete("/users/:id", verifyToken,verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const result = await userCollection.deleteOne({ _id: new ObjectId(id) });
       res.send(result);
